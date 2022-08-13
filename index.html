@@ -1,4 +1,95 @@
 <html>
-  <head></head>
-  <body><h1>Oi, eu sou Goku</h1></body>
+    <head><title>dataTable</title></head>
+    <body>
+        <table border="1" width="1000">
+            <thead id="thead"></thead>
+            <tbody id="tbody"></tbody>
+        </table>
+        <div id="page-buttons"></div>
+        
+        <script>
+            let dataTotal = [];
+            async function gerarTabela() {
+                let req = await fetch('https://rjanovicci.github.io/data/db.json');
+                dataTotal = await req.json();
+                if (dataTotal.length > 0) {
+                    var pageButtonQntd = dataTotal.length / 15;
+                    let data = dataTotal.slice(0, 15);
+        
+                    for (let i = 0; i < pageButtonQntd; i++) {
+                        const pageButton = document.createElement("input");
+                        pageButton.type = "button";
+                        pageButton.id = 'page-btn-' + i;
+                        pageButton.className = 'page-btns'; 
+                        pageButton.value = i + 1;
+                        document.getElementById("page-buttons").appendChild(pageButton);
+                    }
+        
+                    const pageButtons = document.querySelectorAll(".page-btns");
+                    pageButtons[0].setAttribute('disabled', 'true');
+                    pageButtons.forEach((e) => e.addEventListener('click', function(buttonAtual) {
+                        data = dataTotal.slice(buttonAtual.target.id.split('-')[2] * 15, buttonAtual.target.id.split('-')[2] * 15 + 15);
+                        pageButtons.forEach(e => e.removeAttribute('disabled'));
+                        buttonAtual.target.setAttribute('disabled', 'true');
+                        criaLinhas(data);
+                    }))
+        
+                    const tHead = document.getElementById("thead");
+                    const tBody = document.getElementById("tbody");
+                    const criaColunas = (data) => {
+                        const colunas = Object.keys(data[0]);
+                        const trAtual = document.createElement("tr");
+                        const trInputs = document.createElement("tr");
+                        colunas.forEach((coluna, i) => {
+                            const tHeadColuna = document.createElement("th");
+                            tHeadColuna.width = "200";
+                            tHeadColuna.innerHTML = coluna;
+                            trAtual.appendChild(tHeadColuna);
+                            const inputTd = document.createElement("td");
+                            const input = document.createElement("input");
+                            input.type = "text";
+                            input.id = coluna;
+                            input.width = "200";
+                            input.className = "input-text";
+                            input.defaultValue = "";
+                            inputTd.appendChild(input);
+                            trInputs.appendChild(inputTd);
+                        }
+                        );
+                        tHead.appendChild(trAtual);
+                        tHead.appendChild(trInputs);
+                    };
+                    const criaLinhas = (data) => {
+                        tbody.innerHTML = "";
+                            data.forEach(linha => {
+                                const tBodyLinha = document.createElement("tr");
+                                Object.keys(linha).forEach(coluna => {
+                                    const tbodyColuna = document.createElement("td");
+                                    tbodyColuna.align = "center";
+                                    tbodyColuna.innerHTML = linha[coluna];
+                                    tBodyLinha.appendChild(tbodyColuna);
+                                }
+                                );
+                                tbody.appendChild(tBodyLinha);
+                            }
+                        );
+                    };
+                    criaColunas(data);
+                    criaLinhas(data);
+                    const inputsTexts = document.querySelectorAll('.input-text');
+                    inputsTexts.forEach((e) => e.addEventListener('keyup', function(inputAtual) {
+                        const value = inputAtual.target.value.toLowerCase();
+                        if (value.length > 0) {
+                            const { id } = inputAtual.target;
+                            const linhasFiltradas = data.filter(linha => linha[id].toLowerCase().includes(value));
+                            criaLinhas(linhasFiltradas);
+                        } else {
+                            criaLinhas(data);
+                        }
+                    }));
+                }
+            }
+            gerarTabela();
+        </script>
+    </body>
 </html>
